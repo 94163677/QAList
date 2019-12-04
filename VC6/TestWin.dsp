@@ -107,6 +107,10 @@ SOURCE=.\TestWin.rc
 # PROP Default_Filter "h;hpp;hxx;hm;inl"
 # Begin Source File
 
+SOURCE=.\QAInfor.h
+# End Source File
+# Begin Source File
+
 SOURCE=.\resource.h
 # End Source File
 # Begin Source File
@@ -124,6 +128,10 @@ SOURCE=.\TestWin.h
 # Begin Source File
 
 SOURCE=.\small.ico
+# End Source File
+# Begin Source File
+
+SOURCE=.\testbmp.bmp
 # End Source File
 # Begin Source File
 

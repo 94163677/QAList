@@ -9,12 +9,12 @@
 #include "QAInfor.h"
 
 #define MAX_LOADSTRING 100
-#define QA_INFO_ITEM_LENGTH 500 //问答最大数
 #define SEARCH_MAX_LENGTH 512 //搜索栏最大可输入字节数
 
 LPSTR VERSION = TEXT("V1.0.0");//程序版本号
-LPSTR COPYRIGHT_TIME = TEXT("2019 - 2022");//程序版权时间
+LPSTR COPYRIGHT_TIME = TEXT("2019");//程序版权时间
 LPSTR COPYRIGHT_BY = TEXT("Hh7");//程序版权所属
+LPSTR USER_AGREEMENT = TEXT("一、啊啊啊啊。\r\n二、事实上事实上。\r\n一、啊啊啊啊。\r\n一、啊啊啊啊。\r\n一、啊啊啊啊。\r\n一、啊啊啊啊。\r\n一、啊啊啊啊。\r\n一、啊啊啊啊。\r\n一、啊啊啊啊。\r\n一、啊啊啊啊。\r\n一、啊啊啊啊。\r\n一、啊啊啊啊。\r\n一、啊啊啊啊。\r\n一、啊啊啊啊。\r\n一、啊啊啊啊。\r\n一、啊啊啊啊。\r\n一、啊啊啊啊。\r\n一、啊啊啊啊。\r\n一、啊啊啊啊。\r\n一、啊啊啊啊。\r\n");//用户协议
 
 
 // Global Variables:
@@ -22,10 +22,11 @@ HINSTANCE hInst;								// current instance
 HWND hWindow;//窗口的句柄
 HWND hwndListView;//列表的句柄
 
+HFONT hfont;//字体
+
 TCHAR szTitle[MAX_LOADSTRING];//标题
 TCHAR szWindowClass[MAX_LOADSTRING];// The title bar text
 
-QAInfoItem infoList[QA_INFO_ITEM_LENGTH];//问答列表，包括全部的问答数据
 QAInfoItem showList[QA_INFO_ITEM_LENGTH];//问答显示列表，存放筛选后的问答
 int showLength = QA_INFO_ITEM_LENGTH;//问答显示列表的长度
 QAInfoItem selectedItem;//当前选中的问答
@@ -37,11 +38,6 @@ LRESULT CALLBACK	WndProc(HWND, UINT, WPARAM, LPARAM);//主窗口的消息处理
 LRESULT CALLBACK	About(HWND, UINT, WPARAM, LPARAM);//“关于”窗口的消息处理
 LRESULT CALLBACK	Dialog(HWND, UINT, WPARAM, LPARAM);//“问答列表”窗口的消息处理
 LRESULT CALLBACK	Infor(HWND, UINT, WPARAM, LPARAM);//“问答详情”窗口的消息处理
-
-/*
- * 将所有问答信息载入infoList（问答列表）
- */
-void                getIntoQAInfoList();
 
 /**
  * 从showList（问答显示列表）刷新列表界面控件
@@ -148,7 +144,7 @@ ATOM MyRegisterClass(HINSTANCE hInstance)
 
 	wcex.cbSize = sizeof(WNDCLASSEX); 
 
-	wcex.style			= CS_HREDRAW | CS_VREDRAW;
+	wcex.style			= CS_HREDRAW | CS_VREDRAW | DS_CENTER;
 	wcex.lpfnWndProc	= (WNDPROC)WndProc;
 	wcex.cbClsExtra		= 0;
 	wcex.cbWndExtra		= 0;
@@ -226,7 +222,19 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	{
 		case WM_CREATE:
 			hWindow = hWnd;
-			DialogBox(hInst, (LPCTSTR)IDD_DIALOG_LIST, hWnd, (DLGPROC)Dialog);
+			//创建显示字体
+			hfont = CreateFont(
+				-18, -9, 0, 0, 400,
+				FALSE, FALSE, FALSE,
+				DEFAULT_CHARSET,
+				OUT_CHARACTER_PRECIS,
+				CLIP_CHARACTER_PRECIS,
+				DEFAULT_QUALITY,
+				FF_DONTCARE,
+				TEXT("")
+				);
+
+			DialogBox(hInst, (LPCTSTR)IDD_ABOUTBOX, hWnd, (DLGPROC)About);
 			break;
 		case WM_COMMAND:
 			wmId    = LOWORD(wParam); 
@@ -238,6 +246,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				   DialogBox(hInst, (LPCTSTR)IDD_ABOUTBOX, hWnd, (DLGPROC)About);
 				   break;
 				case IDM_EXIT:
+					DeleteObject(hfont);
 				   DestroyWindow(hWnd);
 				   break;
 				case IDM_SEARCH:
@@ -270,16 +279,26 @@ LRESULT CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 	switch (message)
 	{
 		case WM_INITDIALOG:
+			SendMessage(hDlg, WM_SETFONT, (WPARAM)hfont, NULL);
 			//初始化的时候，更改版本号和版权信息
 			SetDlgItemText(hDlg, IDC_STATIC_VER, VERSION);
 			SetDlgItemText(hDlg, IDC_STATIC_TIME, COPYRIGHT_TIME);
 			SetDlgItemText(hDlg, IDC_STATIC_BY, COPYRIGHT_BY);
+			SetDlgItemText(hDlg, IDC_USER_CFG_EDIT, USER_AGREEMENT);
+			
 			return TRUE;
 		case WM_COMMAND:
 			//回车、确定按钮、关闭按钮的事件处理-退出本窗口
-			if (LOWORD(wParam) == IDOK || LOWORD(wParam) == IDCANCEL) 
+			if (LOWORD(wParam) == IDUNOK || LOWORD(wParam) == IDCANCEL) 
 			{
 				EndDialog(hDlg, LOWORD(wParam));
+				DeleteObject(hfont);
+				DestroyWindow(hWindow);
+				return TRUE;
+			}
+			if(LOWORD(wParam) == IDOK){
+				EndDialog(hDlg, LOWORD(wParam));
+				DialogBox(hInst, (LPCTSTR)IDD_DIALOG_LIST, hDlg, (DLGPROC)Dialog);
 				return TRUE;
 			}
 			break;
@@ -293,9 +312,10 @@ LRESULT CALLBACK Infor(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 	switch (message)
 	{
 		case WM_INITDIALOG:
+			SendMessage(hDlg, WM_SETFONT, (WPARAM)hfont, NULL);
 			//将selectedItem（当前选中的问答）的内容初始化到界面上
-			SetDlgItemText(hDlg, IDC_STATIC_QUE, selectedItem.question);
-			SetDlgItemText(hDlg, IDC_STATIC_ANS, selectedItem.answer);
+			SetDlgItemText(hDlg, IDC_EDIT_QUE, selectedItem.question);
+			SetDlgItemText(hDlg, IDC_EDIT_ANS, selectedItem.answer);
 			return TRUE;
 		case WM_COMMAND:
 			//回车、确定按钮、关闭按钮的事件处理-退出本窗口
@@ -318,30 +338,29 @@ LRESULT CALLBACK Dialog(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 	LV_COLUMN lvColumn;//列表的表头
 	HWND edit = GetDlgItem(hDlg, IDC_EDIT1);//关键字的输入框
 	LPSTR editText = (LPSTR)malloc(SEARCH_MAX_LENGTH);//关键字的存放数组
+	
 
 	switch (message)
 	{
 		case WM_INITDIALOG:
 			//初始化列表界面控件
 			hwndListView = CreateWindowEx(
-				WS_EX_CLIENTEDGE, WC_LISTVIEW, TEXT(""), dwStyle, 14, 48, 524, 300, hDlg, NULL, hInst, NULL);
+				WS_EX_CLIENTEDGE, WC_LISTVIEW, TEXT(""), dwStyle, 14, 48, 930, 580, hDlg, NULL, hInst, NULL);
 			//设置扩展样式
 			ListView_SetExtendedListViewStyle(hwndListView, LVS_EX_FULLROWSELECT | LVS_EX_GRIDLINES);
+
+			SendMessage(hwndListView, WM_SETFONT, (WPARAM)hfont, NULL);
 
 			//设置表头样式
 			lvColumn.mask = LVCF_TEXT | LVCF_WIDTH | LVCF_SUBITEM;
 			//设置表头，分别为表宽、位置、表头标题
-			lvColumn.cx = 160;
+			lvColumn.cx = 920;
 			lvColumn.iSubItem = 0;
 			lvColumn.pszText = TEXT("问题");
 			ListView_InsertColumn(hwndListView, 0, &lvColumn);
 
-			lvColumn.cx = 340;
-			lvColumn.iSubItem = 1;
-			lvColumn.pszText = TEXT("答案");
-			ListView_InsertColumn(hwndListView, 1, &lvColumn);
-
 			getIntoQAInfoList();//初始化全部问答数据
+			showLength = 0;
 			reflushListView(hwndListView);//刷新列表界面控件
 
 			return TRUE;
@@ -351,6 +370,7 @@ LRESULT CALLBACK Dialog(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 			if (LOWORD(wParam) == IDCANCEL) 
 			{
 				EndDialog(hDlg, LOWORD(wParam));
+				DeleteObject(hfont);
 				DestroyWindow(hWindow);
 				return TRUE;
 			}else
@@ -441,6 +461,11 @@ void searchListView(HWND hDlg, LPSTR keys){
 		keyLength++;
 	}
 
+	if(keyLength <= 0){
+		showLength = 0;
+		return;
+	}
+
 	//根据“和”和“或”选择要如何筛选
 	if(isOr > 0){
 		searchOrKeys(keyPoint, keyLength);
@@ -452,7 +477,7 @@ void searchListView(HWND hDlg, LPSTR keys){
 void searchOrKeys(LPSTR keyPoint[], int keyLength){
 	int i = 0, j = 0;
 	showLength = 0;
-
+	
 	/*
 	 * 大for循环中，全量遍历每个问答
 	 * 小for循环中，遍历关键字
@@ -460,8 +485,7 @@ void searchOrKeys(LPSTR keyPoint[], int keyLength){
 	 */
 	for(i=0; i<QA_INFO_ITEM_LENGTH; i++){
 		for(j=0; j<keyLength; j++){
-			if(indexOf(infoList[i].question, keyPoint[j]) >= 0
-				|| indexOf(infoList[i].answer, keyPoint[j]) >= 0){
+			if(indexOf(infoList[i].question, keyPoint[j]) >= 0){
 				showList[showLength]= infoList[i];
 				showLength++;
 				break;
@@ -485,19 +509,6 @@ void searchAndKeys(LPSTR keyPoint[], int keyLength){
 		isFound = 1;
 		for(j=0; j<keyLength; j++){
 			if(indexOf(infoList[i].question, keyPoint[j]) < 0){
-				isFound = -1;
-				break;
-			}
-		}
-		if(isFound > 0){
-			showList[showLength]= infoList[i];
-			showLength++;
-			continue;
-		}
-		//遍历所有关键字是否匹配答案
-		isFound = 1;
-		for(j=0; j<keyLength; j++){
-			if(indexOf(infoList[i].answer, keyPoint[j]) < 0){
 				isFound = -1;
 				break;
 			}
@@ -607,10 +618,6 @@ void reflushListView(HWND hwndListView){
 		lvItem.iSubItem = 0;
 		lvItem.pszText = showList[idx].question;
 		ListView_InsertItem(hwndListView, &lvItem);
-		//添加答案
-		lvItem.iSubItem = 1;
-		lvItem.pszText = showList[idx].answer;
-		ListView_SetItem(hwndListView, &lvItem);
 	}
 }
 
@@ -643,7 +650,7 @@ void getNumberString(int number, char buff[]){
 
 //TODO 获取全量的问答信息，暂时没有问答信息，这个是模拟的
 void getIntoQAInfoList(){
-	int i = 0;
+/*	int i = 0;
 	char ans[] = "100岁。";
 	char que[] = "000人可以活到多少岁？";
 
@@ -663,4 +670,27 @@ void getIntoQAInfoList(){
 		*(showList[i].answer + 1) = ('0' + ((i / 10) % 10));
 		*(showList[i].answer + 2) = ('0' + (i % 10));
 	}
+*/
+	infoList[0].question = TEXT("合同（施工合同、监理合同）需要备案吗");
+	infoList[1].question = TEXT("申报施工许可需要核查原件/收取原件吗");
+	infoList[2].question = TEXT("线上审批的流程/怎么在线上提交");
+	infoList[3].question = TEXT("项目经理能在多少个项目上任职");
+	infoList[4].question = TEXT("总监理工程师能在多少个项目上任职");
+	infoList[5].question = TEXT("申请表需要盖章（公章、注册章）吗");
+	infoList[6].question = TEXT("我在系统上报建，人员（施工单位、监理单位）找不到选不了是什么原因，怎么办");
+	infoList[7].question = TEXT("人员备案了，为什么显示证件过期？已经续期了");
+	infoList[8].question = TEXT("幕墙、燃气、装修工程要办理施工许可到底怎么办");
+	infoList[9].question = TEXT("办理施工许可是否一定要取得人防批复？");
+
+	infoList[0].answer = TEXT("不需要");
+	infoList[1].answer = TEXT("全线上审批，只需提供彩色电子版扫描件（PDF格式），无需提供纸质版，也不需要核实原件");
+	infoList[2].answer = TEXT("施工许可核准→\r\n新增（此时你看到这个页面那个大项目编号是空白的）→\r\n查询已有工程规划数据→输入建设工程规划许可证号→\r\n选择项目→\r\n跳转至选择单体进行施工许可证办理页面→\r\n左边全部勾选→\r\n右上角点选择→\r\n此时会跳转到刚刚第二步那个新增的页面（此时你看到这个页面那个大项目编号里有数据）→\r\n点报建→\r\n这时你看到一个页面，里面都是空白的，上面一栏有建设项目登记、基本信息、项目概况、项目范围等等，全部都填写，附件信息那上传对应的扫描资料→\r\n中途可以点暂存→\r\n全部完成点提交\r\n");
+	infoList[3].answer = TEXT("1个");
+	infoList[4].answer = TEXT("3个");
+	infoList[5].answer = TEXT("申请表需要五方盖章（盖公章），各主要负责人无需盖注册章");
+	infoList[6].answer = TEXT("1、若施工单位或监理单位被停牌，则会暂停一切报建业务，系统上是搜索不到人员的。只能把停牌原因处理掉恢复原状才行。\r\n2、人员未备案，系统无信息。则需去珠海市市住建局备案人员。\r\n");
+	infoList[7].answer = TEXT("第一次备案的时候有有效期，有效期到了会显示超期。续期后需要去市住建局备案人员那更新信息，否则续期后系统还是会显示证件已过期。");
+	infoList[8].answer = TEXT("1、专业承包单位（施工单位）是与建设单位签订合同的，则需单独办理施工许可\r\n2、专业承包单位（施工单位）是与总包单位签订合同的，则办理专业分包，在总包主体施工证上做变更\r\n");
+	infoList[9].answer = TEXT("基坑、桩基础工程办理施工许可无需考虑人防，主体工程报建施工许可前必须取得人防报建批复");
+
 }
